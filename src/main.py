@@ -1,31 +1,39 @@
 import numpy as np
 from domain.masking import create_causal_mask
+from domain.cross_attention import CrossAttention
 
-def softmax(x: np.ndarray) -> np.ndarray:
-    # Estabilização numérica subtraindo o máximo
-    e_x = np.exp(x - np.max(x, axis=-1, keepdims=True))
-    return e_x / np.sum(e_x, axis=-1, keepdims=True)
-
-def main():
+def test_causal_mask():
     seq_len = 5
-    d_k = 64
+    M = create_causal_mask(seq_len)
+    print("--- Tarefa 1: Máscara Causal (M) ---")
+    print(M)
+    print("\n(Máscara testada com sucesso no commit anterior)\n")
+
+def test_cross_attention():
+    batch_size = 1
+    seq_len_frances = 10  
+    seq_len_ingles = 4    
+    d_model = 512
     
     np.random.seed(42)
-    Q = np.random.randn(seq_len, d_k)
-    K = np.random.randn(seq_len, d_k)
+    encoder_output = np.random.randn(batch_size, seq_len_frances, d_model)
+    decoder_state = np.random.randn(batch_size, seq_len_ingles, d_model)
     
-    scores = (Q @ K.T) / np.sqrt(d_k)
+    cross_attn = CrossAttention(d_model=d_model)
     
-    M = create_causal_mask(seq_len)
+    output = cross_attn.forward(encoder_out=encoder_output, decoder_state=decoder_state)
     
-    masked_scores = scores + M
+    print("--- Tarefa 2: A Ponte Encoder-Decoder (Cross-Attention) ---")
+    print(f"Shape do Encoder Output (K, V): {encoder_output.shape}")
+    print(f"Shape do Decoder State (Q): {decoder_state.shape}")
+    print(f"Shape da Saída da Atenção: {output.shape}")
     
-    attention_weights = softmax(masked_scores)
-    
-    print("--- Máscara Causal (M) ---")
-    print(M)
-    print("\n--- Pesos de Atenção (após Softmax) ---")
-    print(np.round(attention_weights, 4))
+    if output.shape == (batch_size, seq_len_ingles, d_model):
+        print("\nSucesso! A dimensão da saída respeita o estado do Decoder.")
+
+def main():
+    test_causal_mask()
+    test_cross_attention()
 
 if __name__ == "__main__":
     main()
